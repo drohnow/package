@@ -1,0 +1,46 @@
+{ 
+  "variables" : {
+      "region" : "us-west-1",
+      "source_ami" : "ami-0ef8f1f9d2093fe56",
+      "buildId" : "",
+      "jenkinsBuildId" : "",
+      "artifactId" : ""
+  },
+  "builders" : [
+      {
+        "type" : "amazon-ebs",
+        "profile" : "default",
+        "region" : "{{user `region`}}",
+        "instance_type" : "t2.micro",
+        "source_ami" : "{{user `source_ami`}}",
+        "ssh_username" : "ubuntu",
+        "ami_name" : "{{user `artifactId`}}-{{user `jenkinsBuildId`}}",
+        "ami_description" : "Amazon Linux Image with Tomcat",
+        "run_tags" : {
+        "Name" : "{{user `artifactId`}}-{{user `jenkinsBuildId`}}"
+        },
+        "tags" : {
+            "Tool" : "Packer",
+            "Name" : "{{user `artifactId`}}-{{user `jenkinsBuildId`}}",
+            "build_id" : "{{user `artifactId`}}-{{user `jenkinsBuildId`}}",
+            "Author" : "ochoa"
+        }
+      }
+  ],
+  "provisioners": [
+    {
+      "type" : "file",
+      "source" : "./{{user `buildId`}}",
+      "destination" : "/tmp/{{user `buildId`}}"
+    },
+    {
+      "type": "shell",
+      "script": "./install_app.sh",
+      "execute_command" : "sudo -E -S sh '{{ .Path }}' {{ user `buildId`}}"
+    }
+  ]
+
+
+
+}
+
