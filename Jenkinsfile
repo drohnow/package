@@ -1,10 +1,11 @@
 pipeline  {
   agent any; 
+  def pom; 
 
   options {
         disableConcurrentBuilds()
   }
-
+  
   environment {
     this_group = ""
     this_version = ""
@@ -64,21 +65,54 @@ pipeline  {
     }
 
 
-    stage('Download Artifacts') 
+   
+   stage('Download Artifacts') 
     {
-      steps {
-        echo "Starting --- download artifacts"
-
-        echo "this_group is $this_group"
-        echo "this_version is $this_version"
-        echo "this_artifact is $this_artifact"
+     pom = readMavenPom file: "./pom.xml";
+     // Download artifacts from Nexus
+     echo "Starting --- download artifacts"
+     dir('./download')
+     {
+        this_group = pom.groupId;
+        this_artifact = pom.artifactId;
+        this_version = pom.version;
 
         sh "/usr/local/bin/download-artifacts.sh  $this_group $this_artifact $this_version"
-        echo "*** List build download";
-        sh 'ls -l'
+        echo "*** Test: ${pom.artifactId}, group: ${pom.groupId}, version ${pom.version}";
+
+        def outputGroupId = "Group=" + "$this_group";
+        def outputVersion = "Version=" + "$this_version";
+        def outputArtifact = "ArtifactId=" + "$this_artifact";
+        def outputFullBuildId = "FullBuildId=$this_artifact-$this_version" + ".war";
+        def outputJenkinsBuildId = "JenkinsBuildId=${env.BUILD_ID}";
+        def outputBuildNumber = "BuildNumber=${env.BUILD_NUMBER}";
+
+        def allParams = "$outputGroupId" + "\n" + "$outputVersion" + "\n" + "$outputArtifact" + "\n" + "$outputFullBuildId" + "\n" + "$outputJenkinsBuildId" + "\n" + "$outputBuildNumber";
+
+        //echo "PROJECT NAME from build: ${projectName}";
+        //echo "PROJECT FULL NAME from build: ${fullProjectName}";
+        echo "JOB_BASE_NAME from global: ${env.JOB_BASE_NAME}";
+        echo "JOB NAME from global: ${env.JOB_NAME}";
+
+        echo "this is allParams: $allParams";
+        echo "File Properties designated location:  $filePropertiesPathAndName"
+
+        // Create and Archive the properties file
+        writeFile file: "$filePropertiesPathAndName", text: "$allParams"
+
+   
+        // Copy file properties to this directory and Archive 
+        sh "cp $filePropertiesPathAndName .";
+        archiveArtifacts artifacts: "${fileproperties}";
         echo "Completed --- download artifacts"
 
-      }  
+
+        sh "/usr/local/bin/download-artifacts.sh  $this_group $this_artifact $this_version"
+
+        echo "*** List build download";
+        sh 'ls -l'
+
+     }
 
 
 
