@@ -32,7 +32,7 @@ pipeline  {
         echo "Getting Packer Repo"
         git(
         url:'git@github.com:drohnow/package.git',
-        credentialsId: 'package',
+        credentialsId: 'NEXUS_USER',
         branch: "master"
         )
      }
