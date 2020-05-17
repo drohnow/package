@@ -15,6 +15,7 @@ pipeline  {
     FilePropertiesLocation = "";
     ProjectName = "01-Build";
     fileProperties = "file.properties"
+    def filePropertiesPathAndName = "${JENKINS_HOME}/workspace/import-subsystem/${fileproperties}";
 
   }
 
@@ -32,7 +33,7 @@ pipeline  {
         echo "Getting Packer Repo"
         git(
         url:'git@github.com:drohnow/package.git',
-        credentialsId: 'NEXUS_USER',
+        credentialsId: 'package',
         branch: "master"
         )
      }
