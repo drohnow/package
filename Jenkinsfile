@@ -31,7 +31,7 @@ pipeline  {
       steps {
         echo "Getting Packer Repo"
         git(
-        url:'git@github.com:ochoadevops/package.git',
+        url:'git@github.com:drohnow/package.git',
         credentialsId: 'package',
         branch: "master"
         )
