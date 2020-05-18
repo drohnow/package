@@ -5,12 +5,6 @@ pipeline  {
         disableConcurrentBuilds()
   }
 
-    def this_group;
-    def this_artifact;
-    def this_version; 
-    def output;
-    def fileproperties = "file.properties";
-    def filePropertiesPathAndName = "${JENKINS_HOME}/workspace/import-subsystem/${fileproperties}";
 
 
 
