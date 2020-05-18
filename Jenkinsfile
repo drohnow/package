@@ -68,6 +68,10 @@ pipeline  {
    
    stage('Download Artifacts') 
     {
+          {
+     // Download artifacts from Nexus
+     echo "Starting --- download artifacts"
+     dir('./download')
      
            // Download artifacts from Nexus
         echo "Starting --- download artifacts"
@@ -114,7 +118,8 @@ pipeline  {
 
      }
 
-
+    }
+   }
 
     stage('Create app image')
     {
