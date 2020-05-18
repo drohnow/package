@@ -51,7 +51,7 @@ pipeline  {
   stage('Download Artifacts') 
     {
 
-     {
+     
         this_group = pom.groupId;
         this_artifact = pom.artifactId;
         this_version = pom.version;
