@@ -26,7 +26,7 @@ node {
 
       stage('Create app image')
     {
-      steps {
+      
         // Run packer 
         sh 'pwd'
         sh 'ls -l'
@@ -46,7 +46,7 @@ node {
              echo "Starting --- packer build"
              sh "/usr/local/bin/packer build -var $varBuildId -var $varJenkinsBuildId -var $varArtifactId ./ami.json"
 
-        }
+        
       }
     }
    
