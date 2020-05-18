@@ -68,7 +68,7 @@ pipeline  {
    
    stage('Download Artifacts') 
     {
-          {
+          
      // Download artifacts from Nexus
      echo "Starting --- download artifacts"
      dir('./download')
