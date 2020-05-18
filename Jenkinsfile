@@ -68,11 +68,12 @@ pipeline  {
    
    stage('Download Artifacts') 
     {
-     pom = readMavenPom file: "./pom.xml";
+     
      // Download artifacts from Nexus
      echo "Starting --- download artifacts"
      dir('./download')
      {
+       pom = readMavenPom file: "./pom.xml";
         this_group = pom.groupId;
         this_artifact = pom.artifactId;
         this_version = pom.version;
