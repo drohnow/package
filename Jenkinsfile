@@ -26,31 +26,7 @@ node {
        mvnHome = tool 'M3'
     }
 
-stage('Create app image')
-    {
-      
-        // Run packer 
-        sh 'pwd'
-        sh 'ls -l'
-        echo "Starting --- packer validate"
-   
-        script {
-             def varBuildId = "buildId=" + "$this_full_build_id";
-             def varJenkinsBuildId = "jenkinsBuildId=" + "$this_jenkins_build_id";
-             def varArtifactId = "artifactId=" + "$this_artifact";
- 
-             echo "This is varBuildId $varBuildId";
-             echo "This is varJenkinsBuildId $varBuildId";
-             echo "This is varArtifactId $varArtifactId";
- 
-             sh "/usr/local/bin/packer validate -var $varBuildId -var $varJenkinsBuildId -var $varArtifactId ./ami.json"
 
-             echo "Starting --- packer build"
-             sh "/usr/local/bin/packer build -var $varBuildId -var $varJenkinsBuildId -var $varArtifactId ./ami.json"
-
-        
-      }
-    }    
    
     stage('Publish to NEXUS') 
     {
@@ -147,7 +123,31 @@ stage('Create app image')
 
     }
   
-  
+  stage('Create app image')
+    {
+      
+        // Run packer 
+        sh 'pwd'
+        sh 'ls -l'
+        echo "Starting --- packer validate"
+   
+        script {
+             def varBuildId = "buildId=" + "$this_full_build_id";
+             def varJenkinsBuildId = "jenkinsBuildId=" + "$this_jenkins_build_id";
+             def varArtifactId = "artifactId=" + "$this_artifact";
+ 
+             echo "This is varBuildId $varBuildId";
+             echo "This is varJenkinsBuildId $varBuildId";
+             echo "This is varArtifactId $varArtifactId";
+ 
+             sh "/usr/local/bin/packer validate -var $varBuildId -var $varJenkinsBuildId -var $varArtifactId ./ami.json"
+
+             echo "Starting --- packer build"
+             sh "/usr/local/bin/packer build -var $varBuildId -var $varJenkinsBuildId -var $varArtifactId ./ami.json"
+
+        
+      }
+    } 
 
 
 
