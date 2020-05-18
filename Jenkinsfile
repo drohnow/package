@@ -28,51 +28,7 @@ node {
 
 
    
-    stage('Publish to NEXUS') 
-    {
- 
-       pom = readMavenPom file: "./pom.xml";
-       // Read POM xml file using 'readMavenPom' step , 
-       // this step 'readMavenPom' is included in: https://plugins.jenkins.io/pipeline-utility-steps
-
-       // Find built artifact under target folder
-        
-       filesByGlob = findFiles(glob: "target/*.${pom.packaging}");
-
-       // Print some info from the artifact found
-       echo "*** Print information found";
-       echo "${filesByGlob[0].name} ${filesByGlob[0].path} ${filesByGlob[0].directory} ${filesByGlob[0].length} ${filesByGlob[0].lastModified}"
-
-       // Extract the path from the File found
-       artifactPath = filesByGlob[0].path;
-       artifactName = filesByGlob[0].name;
-       echo "*** this artifactName is: ${artifactName}";
-       echo "*** this artifactPath is: ${artifactPath}";
-       // Assign to a boolean response verifying If the artifact name exists
-       artifactExists = fileExists artifactPath;
-                   
-       if(artifactExists) 
-       {
-          echo "*** File: ${artifactPath}, Path found";
-          echo "*** File: ${artifactPath}, artifactId: ${pom.artifactId}, group: ${pom.groupId}, packaging: ${pom.packaging}, version ${pom.version}";
-      
-       // Upload artifact to Nexus using plugin 
-
-       nexusArtifactUploader artifacts: [[artifactId: pom.artifactId, classifier: '', file: artifactPath, type: pom.packaging]], credentialsId: 'NEXUS_USER', groupId: pom.groupId, nexusUrl: '54.151.85.90:8081/', nexusVersion: 'nexus3', protocol: 'http', repository: 'devops-test-repo-snapshot/', version: pom.version 
-
-
-       }
-       else 
-       {
-          error "*** File: ${artifactPath}, could not be found";
-       }
- 
-       withEnv(["MVN_HOME=$mvnHome"]) 
-       {
-          // sh '"$MVN_HOME/bin/mvn" -DrepositoryId=nexus -Dmaven.test.skip=true clean deploy'
-       }
-
-   }
+   
 
     stage('Download Artifacts') 
     {
