@@ -1,44 +1,52 @@
-pipeline  {
-  agent any; 
+node {
+    echo "Starting Pipeline... "
+    def mvnHome;
+    def pom;
 
-  options {
-        disableConcurrentBuilds()
-  }
+    def this_group;
+    def this_artifact;
+    def this_version; 
+    def output;
+    def fileproperties = "file.properties";
+    def filePropertiesPathAndName = "${JENKINS_HOME}/workspace/import-subsystem/${fileproperties}";
 
-  environment {
-    this_group = ""
-    this_version = ""
-    this_artifact = ""
-    this_full_build_id = ""
-    this_jenkins_build_id= ""
-    props = "";
-    FilePropertiesLocation = "";
-    ProjectName = "01-Build";
-    fileProperties = "file.properties"
-
-  }
-
-    //ANOTHER_ENV = "${currentBuild.getNumber()}"
-    //INHERITED_ENV = "\${BUILD_NUM_ENV} is inherited"
+    stage('Get Build Files') 
+    { 
+       echo "Getting Private Repo"
+       git(
+       url: 'git@github.com:drohnow/java-app.git',
+       credentialsId: '	NEXUS_USER',
+       branch: "master"
+       )
 
 
 
-   stages  {
+       mvnHome = tool 'M3'
+    }
+
+    stage('Build') 
+    {
+       // Run the maven build
+       withEnv(["MVN_HOME=$mvnHome"]) 
+       {
+          if (isUnix()) 
+          {
+             sh '"$MVN_HOME/bin/mvn" -Dmaven.test.failure.ignore clean package'
+          } 
+          else 
+          {
+             bat(/"%MVN_HOME%\bin\mvn" -Dmaven.test.failure.ignore clean package/)
+          }
+       }
+    }
 
 
-   stage('Get Packer Repo') 
-   { 
-      steps {
-        echo "Getting Packer Repo"
-        git(
-        url:'git@github.com:drohnow/package.git',
-        credentialsId: 'package',
-        branch: "master"
-        )
-     }
-
-   }
-
+    stage('Test Results') 
+    {
+       junit '**/target/surefire-reports/TEST-*.xml'
+       archiveArtifacts 'target/*.*'
+    }
+   
     stage('Publish to NEXUS') 
     {
  
@@ -134,33 +142,4 @@ pipeline  {
     }
 
 
-    stage('Create app image')
-    {
-      steps {
-        // Run packer 
-        sh 'pwd'
-        sh 'ls -l'
-        echo "Starting --- packer validate"
-   
-        script {
-             def varBuildId = "buildId=" + "$this_full_build_id";
-             def varJenkinsBuildId = "jenkinsBuildId=" + "$this_jenkins_build_id";
-             def varArtifactId = "artifactId=" + "$this_artifact";
- 
-             echo "This is varBuildId $varBuildId";
-             echo "This is varJenkinsBuildId $varBuildId";
-             echo "This is varArtifactId $varArtifactId";
- 
-             sh "/usr/local/bin/packer validate -var $varBuildId -var $varJenkinsBuildId -var $varArtifactId ./ami.json"
-
-             echo "Starting --- packer build"
-             sh "/usr/local/bin/packer build -var $varBuildId -var $varJenkinsBuildId -var $varArtifactId ./ami.json"
-
-        }
-      }
-    }
-
-   }  // End of Stages
-    
-}  // End of pipeline
-   
+}
