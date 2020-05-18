@@ -116,10 +116,6 @@ pipeline  {
 
 
 
-    } 
-
-
-
     stage('Create app image')
     {
       steps {
