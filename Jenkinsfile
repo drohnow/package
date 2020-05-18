@@ -16,7 +16,7 @@ node {
     { 
        echo "Getting Private Repo"
        git(
-       url: 'git@github.com:drohnow/java-app.git',
+       url: 'git@github.com:drohnow/package.git',
        credentialsId: '	NEXUS_USER',
        branch: "master"
        )
