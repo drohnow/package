@@ -1,93 +1,129 @@
-pipeline  {
-  agent any; 
+node {
+    echo "Starting Pipeline... "
+    def mvnHome;
+    def pom;
 
-  options {
-        disableConcurrentBuilds()
-  }
+    def this_group;
+    def this_artifact;
+    def this_version; 
+    def output;
+    def fileproperties = "file.properties";
+    def filePropertiesPathAndName = "${JENKINS_HOME}/workspace/import-subsystem/${fileproperties}";
 
-  environment {
-    this_group = ""
-    this_version = ""
-    this_artifact = ""
-    this_full_build_id = ""
-    this_jenkins_build_id= ""
-    props = "";
-    FilePropertiesLocation = "";
-    ProjectName = "01-Build";
-    fileProperties = "file.properties"
-
-  }
-
-    //ANOTHER_ENV = "${currentBuild.getNumber()}"
-    //INHERITED_ENV = "\${BUILD_NUM_ENV} is inherited"
+    stage('Get Build Files') 
+    { 
+       echo "Getting Private Repo"
+       git(
+       url: 'git@github.com:drohnow/package.git',
+       credentialsId: 'package',
+       branch: "master"
+       )
 
 
 
-   stages  {
+       mvnHome = tool 'M3'
+    }
+
+    
+   
+    stage('Publish to NEXUS') 
+    {
+ 
+       pom = readMavenPom file: "./pom.xml";
+       // Read POM xml file using 'readMavenPom' step , 
+       // this step 'readMavenPom' is included in: https://plugins.jenkins.io/pipeline-utility-steps
+
+       // Find built artifact under target folder
+        
+       filesByGlob = findFiles(glob: "target/*.${pom.packaging}");
+
+       // Print some info from the artifact found
+       echo "*** Print information found";
+       echo "${filesByGlob[0].name} ${filesByGlob[0].path} ${filesByGlob[0].directory} ${filesByGlob[0].length} ${filesByGlob[0].lastModified}"
+
+       // Extract the path from the File found
+       artifactPath = filesByGlob[0].path;
+       artifactName = filesByGlob[0].name;
+       echo "*** this artifactName is: ${artifactName}";
+       echo "*** this artifactPath is: ${artifactPath}";
+       // Assign to a boolean response verifying If the artifact name exists
+       artifactExists = fileExists artifactPath;
+                   
+       if(artifactExists) 
+       {
+          echo "*** File: ${artifactPath}, Path found";
+          echo "*** File: ${artifactPath}, artifactId: ${pom.artifactId}, group: ${pom.groupId}, packaging: ${pom.packaging}, version ${pom.version}";
+      
+       // Upload artifact to Nexus using plugin 
+
+       nexusArtifactUploader artifacts: [[artifactId: pom.artifactId, classifier: '', file: artifactPath, type: pom.packaging]], credentialsId: 'NEXUS_USER', groupId: pom.groupId, nexusUrl: '54.151.85.90:8081/', nexusVersion: 'nexus3', protocol: 'http', repository: 'devops-test-repo-snapshot/', version: pom.version 
 
 
-   stage('Get Packer Repo') 
-   { 
-      steps {
-        echo "Getting Packer Repo"
-        git(
-        url:'git@github.com:drohnow/package.git',
-        credentialsId: 'package',
-        branch: "master"
-        )
-     }
+       }
+       else 
+       {
+          error "*** File: ${artifactPath}, could not be found";
+       }
+ 
+       withEnv(["MVN_HOME=$mvnHome"]) 
+       {
+          // sh '"$MVN_HOME/bin/mvn" -DrepositoryId=nexus -Dmaven.test.skip=true clean deploy'
+       }
 
    }
 
-   stage('Read Properties File') {
-      steps {
-        script {
-           copyArtifacts(projectName: "${ProjectName}");
-           props = readProperties file:"${fileProperties}";
-
-           this_group = props.Group;
-           this_version = props.Version;
-           this_artifact = props.ArtifactId;
-           this_full_build_id = props.FullBuildId; 
-           this_jenkins_build_id = props.JenkinsBuildId; 
-        }
-
-
-        sh "echo Finished setting this_group = $this_group"
-        sh "echo Finished setting this_version = $this_version"
-        sh "echo Finished setting this_artifact = $this_artifact"
-        sh "echo Finished setting this_full_build_id = $this_full_build_id"
-        sh "echo Finished setting this_jenkins_build_id = $this_jenkins_build_id"
-
-      }
-    }
-
-
     stage('Download Artifacts') 
     {
-      steps {
-        echo "Starting --- download artifacts"
-
-        echo "this_group is $this_group"
-        echo "this_version is $this_version"
-        echo "this_artifact is $this_artifact"
+     // Download artifacts from Nexus
+     echo "Starting --- download artifacts"
+     dir('./download')
+     {
+        this_group = pom.groupId;
+        this_artifact = pom.artifactId;
+        this_version = pom.version;
 
         sh "/usr/local/bin/download-artifacts.sh  $this_group $this_artifact $this_version"
-        echo "*** List build download";
-        sh 'ls -l'
+        echo "*** Test: ${pom.artifactId}, group: ${pom.groupId}, version ${pom.version}";
+
+        def outputGroupId = "Group=" + "$this_group";
+        def outputVersion = "Version=" + "$this_version";
+        def outputArtifact = "ArtifactId=" + "$this_artifact";
+        def outputFullBuildId = "FullBuildId=$this_artifact-$this_version" + ".war";
+        def outputJenkinsBuildId = "JenkinsBuildId=${env.BUILD_ID}";
+        def outputBuildNumber = "BuildNumber=${env.BUILD_NUMBER}";
+
+        def allParams = "$outputGroupId" + "\n" + "$outputVersion" + "\n" + "$outputArtifact" + "\n" + "$outputFullBuildId" + "\n" + "$outputJenkinsBuildId" + "\n" + "$outputBuildNumber";
+
+        //echo "PROJECT NAME from build: ${projectName}";
+        //echo "PROJECT FULL NAME from build: ${fullProjectName}";
+        echo "JOB_BASE_NAME from global: ${env.JOB_BASE_NAME}";
+        echo "JOB NAME from global: ${env.JOB_NAME}";
+
+        echo "this is allParams: $allParams";
+        echo "File Properties designated location:  $filePropertiesPathAndName"
+
+        // Create and Archive the properties file
+        writeFile file: "$filePropertiesPathAndName", text: "$allParams"
+
+   
+        // Copy file properties to this directory and Archive 
+        sh "cp $filePropertiesPathAndName .";
+        archiveArtifacts artifacts: "${fileproperties}";
         echo "Completed --- download artifacts"
 
-      }  
 
+        sh "/usr/local/bin/download-artifacts.sh  $this_group $this_artifact $this_version"
 
+        echo "*** List build download";
+        sh 'ls -l'
 
-    } 
+     }
 
-
-
-    stage('Create app image')
+    }
+  
+  stage('Create app image')
     {
-      steps {
+      
         // Run packer 
         sh 'pwd'
         sh 'ls -l'
@@ -107,11 +143,11 @@ pipeline  {
              echo "Starting --- packer build"
              sh "/usr/local/bin/packer build -var $varBuildId -var $varJenkinsBuildId -var $varArtifactId ./ami.json"
 
-        }
+        
       }
     }
 
-   }  // End of Stages
-    
-}  // End of pipeline
-   
+
+
+}
+
