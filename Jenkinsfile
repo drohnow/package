@@ -7,6 +7,7 @@ node {
     def this_artifact;
     def this_version; 
     def output;
+    def this_full_build_id;
     def fileproperties = "file.properties";
     def filePropertiesPathAndName = "${JENKINS_HOME}/workspace/import-subsystem/${fileproperties}";
 
