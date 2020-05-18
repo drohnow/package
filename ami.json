@@ -1,7 +1,7 @@
-{ 
+{
   "variables" : {
       "region" : "us-west-1",
-      "source_ami" : "ami-0ef8f1f9d2093fe56",
+      "source_ami" : "ami-015857167a9e843f3",
       "buildId" : "",
       "jenkinsBuildId" : "",
       "artifactId" : ""
@@ -14,8 +14,9 @@
         "instance_type" : "t2.micro",
         "source_ami" : "{{user `source_ami`}}",
         "ssh_username" : "ubuntu",
-        "ami_name" : "{{user `artifactId`}}-{{user `jenkinsBuildId`}}",
+        "ami_name" : "devops_tomcat-{{timestamp}}",
         "ami_description" : "Amazon Linux Image with Tomcat",
+        "security_group_id": "sg-0bf091d9a56cc53b6",
         "run_tags" : {
         "Name" : "{{user `artifactId`}}-{{user `jenkinsBuildId`}}"
         },
@@ -43,4 +44,3 @@
 
 
 }
-
