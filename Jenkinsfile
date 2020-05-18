@@ -50,6 +50,7 @@ pipeline  {
 
   stage('Download Artifacts') 
     {
+       pom = readMavenPom file: "./pom.xml";
 
      
         this_group = pom.groupId;
