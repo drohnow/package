@@ -5,21 +5,12 @@ pipeline  {
         disableConcurrentBuilds()
   }
 
-  environment {
-    this_group = ""
-    this_version = ""
-    this_artifact = ""
-    this_full_build_id = ""
-    this_jenkins_build_id= ""
-    props = "";
-    FilePropertiesLocation = "";
-    ProjectName = "01-Build";
-    fileProperties = "file.properties"
-
-  }
-
-    //ANOTHER_ENV = "${currentBuild.getNumber()}"
-    //INHERITED_ENV = "\${BUILD_NUM_ENV} is inherited"
+    def this_group;
+    def this_artifact;
+    def this_version; 
+    def output;
+    def fileproperties = "file.properties";
+    def filePropertiesPathAndName = "${JENKINS_HOME}/workspace/import-subsystem/${fileproperties}";
 
 
 
